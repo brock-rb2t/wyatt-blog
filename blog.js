@@ -60,10 +60,20 @@
   const CAL_ICON = `<svg class="cal" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>`;
 
   function excerpt(body, max = 180) {
-    const para = body.split(/\n\n+/).find((p) => {
-      const t = p.trim();
-      return t && !t.startsWith('#') && !t.startsWith('>') && !t.startsWith('-') && !/^\d+\./.test(t);
-    });
+    // Walk lines, skip headings/blockquotes/lists/blanks, gather the first
+    // run of prose lines as the excerpt.
+    const isProse = (t) =>
+      t && !t.startsWith('#') && !t.startsWith('>') && !t.startsWith('-')
+        && !t.startsWith('```') && !/^\d+\./.test(t);
+    let para = '';
+    for (const line of body.split('\n')) {
+      const t = line.trim();
+      if (isProse(t)) {
+        para += (para ? ' ' : '') + t;
+      } else if (para) {
+        break;
+      }
+    }
     if (!para) return '';
     const text = para.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
                      .replace(/[`*_]/g, '')
